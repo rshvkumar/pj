@@ -2,41 +2,47 @@ import pandas as pd
 import numpy as np
 
 
-exNames = ['storeNumber','avgWeeklyDelOrders','avgWeeklyDelWaitTime','avgResDensityByTract','avgWalkByTract']
-df = pd.read_excel("paredDownMergedDataSetCensusAndPJ.xlsx",0,0,names=exNames)
+exNames = ['StoreNumber','AvgWeeklyDeliveryVolume','AvgWeeklyWaitTime','AvgResidentialDensity','AvgWalkability','CrimeIndex']
+df = pd.read_excel("slimMergedDataSetCensusAndPJ.xlsx",0,0,names=exNames)
+#print(df.corr())
+#Correlation delivery time to delivery volume = 0.11
 
-meanWait = df['avgWeeklyDelWaitTime'].mean()
-df['avgWeeklyDelWaitTime'].fillna(value=meanWait,inplace=True)
+maxDel = df["AvgWeeklyDeliveryVolume"].max()
+maxWait = df["AvgWeeklyWaitTime"].max()
+maxRes = df["AvgResidentialDensity"].max()
+maxWalk = df["AvgWalkability"].max()
+minCrime = df["CrimeIndex"].min()
 
-sumDelOrders = df['avgWeeklyDelOrders'].sum()
-sumWait = df['avgWeeklyDelWaitTime'].sum()
-sumDensity = df['avgResDensityByTract'].sum()
-sumWalkability = df['avgWalkByTract'].sum()
+meanWait = df['AvgWeeklyWaitTime'].mean()
+df['AvgWeeklyWaitTime'].fillna(value=meanWait,inplace=True)
 
-df["normAvgWeeklyDelOrders"] = df["avgWeeklyDelOrders"] / sumDelOrders
-df["normAvgWeeklyDelWaitTime"] = df["avgWeeklyDelWaitTime"] / sumWait
-df["normAvgResDensityByTract"] = df["avgResDensityByTract"] / sumDensity
-df["normAvgWalkByTract"] = df["avgWalkByTract"] / sumWalkability
+df["normAvgWeeklyDelOrders"] = df["AvgWeeklyDeliveryVolume"] / maxDel
+df["normAvgWeeklyDelWaitTime"] = df["AvgWeeklyWaitTime"] / maxWait
+df["normAvgResDensityByTract"] = df["AvgResidentialDensity"] / maxRes
+df["normAvgWalkByTract"] = df["AvgWalkability"] / maxWalk
+df["normCrimeIndex"] = minCrime * (1 / df["CrimeIndex"]) 
 
 #Analytic Hierarchy Process - weight calculations for MADM
-    #Weekly delivery orders - 0.093797
-    #Delivery wait time - 0.555884
-    #Residential density - 0.064315
-    #Walkability - 0.286005
-
-weightDelOrders = 0.093797
-weightWait = 0.555884
-weightDensity = 0.064315
-weightWalkability = 0.286005
+weightDelOrders = 0.060785
+weightWait = 0.350558
+weightDensity = 0.044688
+weightWalkability = 0.274496
+weightCrime = 0.269472
 
 df["weightedNormDelOrders"] = df["normAvgWeeklyDelOrders"] * weightDelOrders
 df["weightedNormWait"] = df["normAvgWeeklyDelWaitTime"] * weightWait
 df["weightedNormDensity"] = df["normAvgResDensityByTract"] * weightDensity
 df["weightedNormWalkability"] = df["normAvgWalkByTract"] * weightWalkability
+df["weightedNormCrime"] = df["normCrimeIndex"] * weightCrime
 
-df["preferenceScore"] = df["weightedNormDelOrders"] + df["weightedNormWait"] + df["weightedNormDensity"] + df["weightedNormWalkability"] 
+#Weighted Sum Model
+#https://www.youtube.com/watch?v=Kx8hpvhFm30
+df["preferenceScore"] = df["weightedNormDelOrders"] + df["weightedNormWait"] + df["weightedNormDensity"] + df["weightedNormWalkability"] + df["weightedNormCrime"]
+df.to_excel("Iter2Ranking.xlsx")
+
+
+
 #df["Ranking"] = df.groupby("storeNumber")["preferenceScore"].rank(ascending=False)
-df.to_excel("Iter1Ranking.xlsx")
 
 # df = df.dropna()
 
