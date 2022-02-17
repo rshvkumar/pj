@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 
-exNames = ['StoreNumber','AvgWeeklyDeliveryVolume','AvgWeeklyWaitTime','AvgResidentialDensity','AvgWalkability','CrimeIndex']
-df = pd.read_excel("slimMergedDataSetCensusAndPJ.xlsx",0,0,names=exNames)
-#print(df.corr())
+#exNames = ['StoreNumber','AvgWeeklyDeliveryVolume','AvgWeeklyWaitTime','AvgResidentialDensity','AvgWalkability','CrimeIndex']
+df = pd.read_excel("slimMergedDataSetCensusAndPJ.xlsx",0,header = 0)
+#print(df.head())
 #Correlation delivery time to delivery volume = 0.11
 
 maxDel = df["AvgWeeklyDeliveryVolume"].max()
@@ -38,7 +38,7 @@ df["weightedNormCrime"] = df["normCrimeIndex"] * weightCrime
 #Weighted Sum Model
 #https://www.youtube.com/watch?v=Kx8hpvhFm30
 df["preferenceScore"] = df["weightedNormDelOrders"] + df["weightedNormWait"] + df["weightedNormDensity"] + df["weightedNormWalkability"] + df["weightedNormCrime"]
-df.to_excel("Iter2Ranking.xlsx")
+df.to_excel("Iter3Ranking.xlsx")
 
 
 
