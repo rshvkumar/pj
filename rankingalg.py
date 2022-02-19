@@ -1,8 +1,43 @@
 import pandas as pd
 import numpy as np
 
+# Intensity of Importance  /	Definition
+# 1	Equal importance
+# 3	Moderate importance
+# 5	Strong importance
+# 7	Very strong importance
+# 9	Extreme importance
+# 2, 4, 6, 8	Intermediate values
+frac7 = 1/7
+frac6 = 1/6
 
-#exNames = ['StoreNumber','AvgWeeklyDeliveryVolume','AvgWeeklyWaitTime','AvgResidentialDensity','AvgWalkability','CrimeIndex']
+ahp = np.matrix([[1.0,7.0,5.0,2.0,frac6],
+    [frac7,1.00,0.50,0.25,0.20],
+    [0.20,2.0,1.0,0.2,0.2],
+    [0.5,3.0,5.0,1.0,2.0],
+    [6.0,5.0,5.0,0.5,1.0],])
+
+ahpDf = pd.DataFrame(ahp, columns = ["Walkability", "ResidentialDensity", "DeliveryOrderVolume","CrimeIndex","WaitTime"])
+ahpDf["normW"] = ahpDf['Walkability'] /  ahpDf['Walkability'].sum()
+ahpDf["normRes"] = ahpDf['ResidentialDensity'] /  ahpDf['ResidentialDensity'].sum()
+ahpDf["normDel"] = ahpDf['DeliveryOrderVolume'] /  ahpDf['DeliveryOrderVolume'].sum()
+ahpDf["normC"] = ahpDf['CrimeIndex'] /  ahpDf['CrimeIndex'].sum()
+ahpDf["normWait"] = ahpDf['WaitTime'] /  ahpDf['WaitTime'].sum()
+
+ahpNormDf = ahpDf[["normW","normRes","normDel",'normC','normWait']]
+
+
+ahpNormDf["Weights"] = ahpNormDf.mean(axis = 1)
+#print(ahpNormDf.head())
+
+#Analytic Hierarchy Process - weight calculations for MADM
+weightWalkability = ahpNormDf["Weights"].iloc[0]
+weightDensity = ahpNormDf["Weights"].iloc[1]
+weightDelOrders = ahpNormDf["Weights"].iloc[2]
+weightCrime = ahpNormDf["Weights"].iloc[3]
+weightWait = ahpNormDf["Weights"].iloc[4]
+
+
 df = pd.read_excel("slimMergedDataSetCensusAndPJ.xlsx",0,header = 0)
 #print(df.head())
 #Correlation delivery time to delivery volume = 0.11
@@ -22,12 +57,7 @@ df["normAvgResDensityByTract"] = df["AvgResidentialDensity"] / maxRes
 df["normAvgWalkByTract"] = df["AvgWalkability"] / maxWalk
 df["normCrimeIndex"] = minCrime * (1 / df["CrimeIndex"]) 
 
-#Analytic Hierarchy Process - weight calculations for MADM
-weightDelOrders = 0.060785
-weightWait = 0.350558
-weightDensity = 0.044688
-weightWalkability = 0.274496
-weightCrime = 0.269472
+
 
 df["weightedNormDelOrders"] = df["normAvgWeeklyDelOrders"] * weightDelOrders
 df["weightedNormWait"] = df["normAvgWeeklyDelWaitTime"] * weightWait
@@ -38,7 +68,7 @@ df["weightedNormCrime"] = df["normCrimeIndex"] * weightCrime
 #Weighted Sum Model
 #https://www.youtube.com/watch?v=Kx8hpvhFm30
 df["preferenceScore"] = df["weightedNormDelOrders"] + df["weightedNormWait"] + df["weightedNormDensity"] + df["weightedNormWalkability"] + df["weightedNormCrime"]
-df.to_excel("Iter3Ranking.xlsx")
+# df.to_excel("Iter3Ranking.xlsx")
 
 
 
