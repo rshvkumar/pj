@@ -37,7 +37,31 @@ weightDelOrders = ahpNormDf["Weights"].iloc[2]
 weightCrime = ahpNormDf["Weights"].iloc[3]
 weightWait = ahpNormDf["Weights"].iloc[4]
 
+#AHP analysis
 
+ahpDf["weightedW"] = ahpDf['Walkability'] *  weightWalkability
+ahpDf["weightedRes"] = ahpDf['ResidentialDensity'] * weightDensity
+ahpDf["weightedVol"] = ahpDf['DeliveryOrderVolume'] * weightDelOrders
+ahpDf["weightedCr"] = ahpDf['CrimeIndex'] * weightCrime
+ahpDf["weightedWait"] = ahpDf['WaitTime'] * weightWait
+
+weightedAHPDf = ahpDf[["weightedW","weightedRes","weightedVol","weightedCr","weightedWait"]]
+weightedAHPDf["Weighted Row Sum"] = weightedAHPDf.sum(axis = 1)
+
+lambdas = [weightedAHPDf["Weighted Row Sum"].iloc[0] / weightWalkability, weightedAHPDf["Weighted Row Sum"].iloc[1] / weightDensity, 
+    weightedAHPDf["Weighted Row Sum"].iloc[2] / weightDelOrders, weightedAHPDf["Weighted Row Sum"].iloc[3] / weightCrime,
+        weightedAHPDf["Weighted Row Sum"].iloc[4] / weightWait]
+lambdaMax = sum(lambdas)/len(lambdas)
+
+consistencyIndex = (lambdaMax - len(lambdas)) / (len(lambdas) - 1)
+
+#Random index
+#n	1	2	3	    4	5	    6	     7	     8	    9
+#RI	0	0	0.58	0.9	1.12	1.24	1.32	1.41	1.45
+consistencyRatio = consistencyIndex / 1.12
+print(consistencyRatio)
+
+#WSM
 df = pd.read_excel("slimMergedDataSetCensusAndPJ.xlsx",0,header = 0)
 #print(df.head())
 #Correlation delivery time to delivery volume = 0.11
@@ -58,7 +82,6 @@ df["normAvgWalkByTract"] = df["AvgWalkability"] / maxWalk
 df["normCrimeIndex"] = minCrime * (1 / df["CrimeIndex"]) 
 
 
-
 df["weightedNormDelOrders"] = df["normAvgWeeklyDelOrders"] * weightDelOrders
 df["weightedNormWait"] = df["normAvgWeeklyDelWaitTime"] * weightWait
 df["weightedNormDensity"] = df["normAvgResDensityByTract"] * weightDensity
@@ -69,7 +92,6 @@ df["weightedNormCrime"] = df["normCrimeIndex"] * weightCrime
 #https://www.youtube.com/watch?v=Kx8hpvhFm30
 df["preferenceScore"] = df["weightedNormDelOrders"] + df["weightedNormWait"] + df["weightedNormDensity"] + df["weightedNormWalkability"] + df["weightedNormCrime"]
 # df.to_excel("Iter3Ranking.xlsx")
-
 
 
 #df["Ranking"] = df.groupby("storeNumber")["preferenceScore"].rank(ascending=False)
